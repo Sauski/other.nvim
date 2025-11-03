@@ -68,7 +68,12 @@ local function openFile(command, position)
 		State.lastFile = filename
 
 		M.close_window()
-		vim.api.nvim_set_current_buf(State.currentBuffer)
+
+		if State.targetWindow then
+			vim.api.nvim_set_current_win(State.targetWindow)
+		else
+			vim.api.nvim_set_current_buf(State.currentBuffer)
+		end
 
 		if State.options and State.options.hooks and State.options.hooks.onOpenFile then
 			util.openFile(command, filename, State.options.hooks.onOpenFile)
@@ -259,10 +264,11 @@ function M.open_file_vs(pos)
 end
 
 -- Main function to open the window
-function M.open_window(files, callerInstance, callerBuffer, openCommand)
+function M.open_window(files, callerInstance, callerBuffer, openCommand, targetWindow)
 	State.otherInstance = callerInstance
 	State.currentBuffer = callerBuffer
 	State.windowOpenCommand = openCommand
+	State.targetWindow = targetWindow
 	State.lastFile = nil
 
 	-- Get and store options

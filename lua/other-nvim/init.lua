@@ -294,16 +294,21 @@ end
 
 ---@param context string|nil Context to filter by
 ---@param command string Command to open file with
-local function open_other_file(context, command)
+---@param target_window number|nil Window ID to open file in
+local function open_other_file(context, command, target_window)
 	local current_buffer = vim.api.nvim_get_current_buf()
+	local current_file = vim.api.nvim_buf_get_name(0)
 	local remembered = context == nil and vim.b.onv_otherFile
 
 	if remembered then
+		if target_window then
+			vim.api.nvim_set_current_win(target_window)
+		end
 		util.openFile(command, remembered, Config.options.hooks.onOpenFile)
 		return
 	end
 
-	local matches = find_other_files(vim.api.nvim_buf_get_name(0), context)
+	local matches = find_other_files(current_file, context)
 
 	if #matches == 0 then
 		vim.notify("No 'other' file found.", vim.log.levels.WARN)
@@ -311,6 +316,9 @@ local function open_other_file(context, command)
 	end
 
 	if #matches == 1 then
+		if target_window then
+			vim.api.nvim_set_current_win(target_window)
+		end
 		manage_buffer_reference(matches[1].filename, current_buffer)
 		util.openFile(command, matches[1].filename, Config.options.hooks.onOpenFile)
 		return
@@ -321,7 +329,7 @@ local function open_other_file(context, command)
 		return
 	end
 
-	window.open_window(filtered, M, current_buffer, command)
+	window.open_window(filtered, M, current_buffer, command, target_window)
 end
 
 -- Public API
@@ -346,17 +354,25 @@ function M.setup(opts)
 end
 
 -- File opening commands
-function M.open(context)
-	open_other_file(context, "e")
+---@param context string|nil Context to filter by
+---@param target_window number|nil Window ID to open file in
+function M.open(context, target_window)
+	open_other_file(context, "e", target_window)
 end
-function M.openTabNew(context)
-	open_other_file(context, "tabnew")
+---@param context string|nil Context to filter by
+---@param target_window number|nil Window ID to open file in
+function M.openTabNew(context, target_window)
+	open_other_file(context, "tabnew", target_window)
 end
-function M.openSplit(context)
-	open_other_file(context, "sp")
+---@param context string|nil Context to filter by
+---@param target_window number|nil Window ID to open file in
+function M.openSplit(context, target_window)
+	open_other_file(context, "sp", target_window)
 end
-function M.openVSplit(context)
-	open_other_file(context, "vs")
+---@param context string|nil Context to filter by
+---@param target_window number|nil Window ID to open file in
+function M.openVSplit(context, target_window)
+	open_other_file(context, "vs", target_window)
 end
 function M.clear()
 	vim.b.onv_otherFile = nil
